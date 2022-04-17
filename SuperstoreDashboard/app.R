@@ -2,11 +2,27 @@ library(shiny)
 library(bslib)
 library(tidyverse)
 
-### Data pre-processing ###
+### Data pre-processing & Functions###
 superstoreData <- read.csv("/Users/Vivian/Documents/GitHub/DataProjects/SuperstoreDashboard/Superstore.csv")
 superstoreData <- superstoreData %>% mutate("Order.Year" = format(as.Date(`Order.Date`, format="%m/%d/%Y"),"%Y"))
 orderYears <- sort(unique(superstoreData$`Order.Year`), decreasing = TRUE)
 states <- sort(unique(superstoreData$`State`))
+
+renderTable_salesByCategory <- function(category_name, input) {
+  renderTable(
+    {superstoreData %>% 
+        filter(`Category` == category_name, Order.Year == input$orderYear, State == input$state) %>% 
+        group_by(`Sub.Category`) %>% 
+        summarize("Order Count" = n_distinct(Order.ID),
+                  "Total Profit" = sum(Profit)
+        ) %>% 
+        rename("Subcategory" = `Sub.Category`) %>% 
+        arrange(desc(`Total Profit`))
+    },
+    hover = TRUE,
+    spacing = 'xs'
+  )
+}
 
 
 ### Application UI ###
@@ -38,6 +54,8 @@ ui <- fluidPage(
         # Output
         mainPanel(
           tabsetPanel(
+            
+            # Sales by Category Tab #
             tabPanel(
               "Sales by Category",
               h5("Furniture"),
@@ -47,6 +65,7 @@ ui <- fluidPage(
               h5("Technology"),
               tableOutput("techSales")
             )
+            
           )
         )
       )
@@ -58,52 +77,15 @@ ui <- fluidPage(
 ### Server Logic ###
 server <- function(input, output) {
   
-  # Furniture sales table for Sales by Category tab
-  output$furnSales <- renderTable(
-    {superstoreData %>% 
-        filter(`Category` == "Furniture", Order.Year == input$orderYear, State == input$state) %>% 
-        group_by(`Sub.Category`) %>% 
-        summarize("Order Count" = n_distinct(Order.ID),
-                  "Total Profit" = sum(Profit)
-        ) %>% 
-        rename("Subcategory" = `Sub.Category`) %>% 
-        arrange(desc(`Total Profit`))
-    },
-    hover = TRUE,
-    spacing = 'xs'
-  )
-  
-  # Office Supplies sales table for Sales by Category tab
-  output$officeSales <- renderTable(
-    {superstoreData %>% 
-        filter(`Category` == "Office Supplies", Order.Year == input$orderYear, State == input$state) %>% 
-        group_by(`Sub.Category`) %>% 
-        summarize("Order Count" = n_distinct(Order.ID),
-                  "Total Profit" = sum(Profit)
-        ) %>% 
-        rename("Subcategory" = `Sub.Category`) %>% 
-        arrange(desc(`Total Profit`))
-    },
-    hover = TRUE,
-    spacing = 'xs'
-  )
-  
-  # Technology sales table for Sales by Category tab
-  output$techSales <- renderTable(
-    {superstoreData %>% 
-        filter(`Category` == "Technology", Order.Year == input$orderYear, State == input$state) %>% 
-        group_by(`Sub.Category`) %>% 
-        summarize("Order Count" = n_distinct(Order.ID),
-                  "Total Profit" = sum(Profit)
-        ) %>% 
-        rename("Subcategory" = `Sub.Category`) %>% 
-        arrange(desc(`Total Profit`))
-    },
-    hover = TRUE,
-    spacing = 'xs'
-  )
+  ## State View Page ##
+  # Sales by Category Tab #
+  # Show details on subcategory sales for each category
+  output$furnSales <- renderTable_salesByCategory("Furniture", input)
+  output$officeSales <- renderTable_salesByCategory("Office Supplies", input)
+  output$techSales <- renderTable_salesByCategory("Technology", input)
 
 }
+
 
 ### Run the application ###
 shinyApp(ui = ui, server = server)
