@@ -11,34 +11,47 @@ states <- sort(unique(superstoreData$`State`))
 
 ### Application UI ###
 ui <- fluidPage(
-  
+
   theme = bs_theme(version = 4, bootswatch = "lux"),
   
-  titlePanel("Superstore Sales Dashboard"),
-  
-  sidebarLayout(
+  navbarPage(
+    "Superstore Sales Dashboard",
     
-    # Input
-    sidebarPanel(
-      selectInput("orderYear", "Order Year:", orderYears),
-      selectInput("state", "State:", states)
+    inverse = TRUE,
+    
+    ## Overview Page ##
+    tabPanel(
+      "Overview",
+      "Oops! Looks like this page is still being developed..."
     ),
     
-    # Output
-    mainPanel(
-      tabsetPanel(
-        tabPanel(
-          "Sales by Category",
-          h5("Furniture"),
-          tableOutput("furnSales"),
-          h5("Office Supplies"),
-          tableOutput("officeSales"),
-          h5("Technology"),
-          tableOutput("techSales")
+    ## State View Page ##
+    tabPanel(
+      "State View",
+      sidebarLayout(
+        # Input
+        sidebarPanel(
+          selectInput("orderYear", "Order Year:", orderYears),
+          selectInput("state", "State:", states)
+          ,width = 3
+        ),
+        # Output
+        mainPanel(
+          tabsetPanel(
+            tabPanel(
+              "Sales by Category",
+              h5("Furniture"),
+              tableOutput("furnSales"),
+              h5("Office Supplies"),
+              tableOutput("officeSales"),
+              h5("Technology"),
+              tableOutput("techSales")
+            )
+          )
         )
       )
-    )
-  )
+    ),
+  ),
 )
 
 
@@ -92,5 +105,5 @@ server <- function(input, output) {
 
 }
 
-# Run the application 
+### Run the application ###
 shinyApp(ui = ui, server = server)
